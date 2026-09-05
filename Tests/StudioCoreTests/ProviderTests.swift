@@ -78,6 +78,20 @@ final class ProviderTests: XCTestCase {
         XCTAssertEqual(AspectRatio.story.value, 9.0 / 16)
     }
 
+    func testProviderAuthenticationOptionsUseOfficialHTTPSPages() {
+        XCTAssertEqual(ProviderID.openAI.authentication.subscriptionStatus, "Not supported")
+        XCTAssertEqual(ProviderID.xAI.authentication.subscriptionStatus, "No public sign-in")
+
+        for provider in ProviderID.allCases {
+            XCTAssertEqual(provider.authentication.subscriptionHelpURL.scheme, "https")
+            XCTAssertEqual(provider.authentication.apiKeyURL.scheme, "https")
+            XCTAssertEqual(provider.authentication.apiUsageURL.scheme, "https")
+        }
+
+        XCTAssertEqual(ProviderID.openAI.authentication.apiKeyURL.host, "platform.openai.com")
+        XCTAssertEqual(ProviderID.xAI.authentication.apiKeyURL.host, "console.x.ai")
+    }
+
     func testInvalidInputsRejected() {
         XCTAssertThrowsError(try ImageRequest(prompt: " \n ", options: input().options).validate())
         XCTAssertThrowsError(try input(count: 0).validate())
@@ -100,7 +114,10 @@ final class ProviderTests: XCTestCase {
         do {
             _ = try await service.generate(input(), apiKey: " \n")
             XCTFail("Expected credential failure")
-        } catch { XCTAssertTrue(error is StudioError) }
+        } catch {
+            XCTAssertTrue(error is StudioError)
+            XCTAssertEqual(error.localizedDescription, "Add an API key for this provider in Settings. Subscription sign-in is not available.")
+        }
         let calls = await provider.calls
         XCTAssertEqual(calls, 0)
     }

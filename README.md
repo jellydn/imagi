@@ -24,7 +24,7 @@ Built and maintained by [@jellydn](https://github.com/jellydn).
 - **Export** — ShareLink, Photos, context menus, confirmed deletion
 - **Credentials** — Keychain only. Defaults and notification choice live in preferences
 
-**ChatGPT Plus/Pro and Grok consumer subscriptions are not API credentials.** This app does not use cookies, private endpoints, or subscription workarounds. Saving a key does not verify it; the first real request does. Each generation or edit can incur provider charges. There are no automatic paid retries.
+**Provider subscriptions work differently.** ChatGPT Plus/Pro does not include OpenAI API usage. Paid Grok plans can include a shared pool with an API category, but xAI's public image API flow still requires an API key and allowance depends on the account and plan. This app does not use cookies, private endpoints, another app's OAuth client, or other subscription workarounds. Saving a key does not verify it; the first real request does.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ Built and maintained by [@jellydn](https://github.com/jellydn).
 - iOS/iPadOS 17 and macOS 14
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 - [just](https://github.com/casey/just) — optional shortcuts (see [`justfile`](./justfile))
-- A funded [OpenAI](https://platform.openai.com/api-keys) and/or [xAI](https://console.x.ai) API key
+- A configured [OpenAI](https://platform.openai.com/api-keys) and/or [xAI](https://console.x.ai/team/default/api-keys) API key
 
 ```sh
 brew install xcodegen just
@@ -53,13 +53,13 @@ After you change `project.yml`, run `just generate` again. Do not edit `ImageStu
 
 ## First image
 
-1. Open **Settings** and follow **Get API key** for your provider.
-2. Enable API billing with that provider. Save the key in the app.
+1. Open **Settings** and review the subscription note for your provider.
+2. Follow **Get API key**, configure the provider account as needed, and save the key in the app.
 3. Open **Create**, enter a prompt, and choose 1–4 variants and a ratio.
 4. Select **Generate**. Images are saved to History automatically.
 5. Open a variant. Select **Refine** to use it as the reference, or use **Save to Photos** / **Share**.
 
-**Regenerate** restores the original prompt, settings, and reference (for an edit). You still select **Generate** to confirm a new paid request.
+A saved key is not reported as verified until a real request succeeds. Each generation or edit can use provider credit or subscription allowance and can incur charges. There are no automatic paid retries. **Regenerate** restores the original prompt, settings, and reference (for an edit). You still select **Generate** to confirm a new request.
 
 ## Development
 
@@ -84,6 +84,8 @@ Shared package tests:
 just test
 # or: swift test
 ```
+
+Current Linux-orb verification: 14 package tests pass, and Swift syntax parsing passes for both iOS and macOS conditional branches. This is not Apple SDK type-checking. Apple builds, native tests, rendered UI, Keychain integration, and live provider generation require a Mac or configured provider access.
 
 Apple image-storage and SwiftData tests (Mac):
 
@@ -127,7 +129,12 @@ Generation uses a cancellable URLSession request with a 300s timeout. iOS grants
 
 ## Provider references
 
+- [OpenAI API quickstart and API-key authentication](https://developers.openai.com/api/docs/quickstart)
+- [OpenAI ChatGPT and API billing](https://help.openai.com/en/articles/9039756)
 - [OpenAI image generation and edits](https://platform.openai.com/docs/guides/image-generation)
+- [xAI API quickstart and API-key authentication](https://docs.x.ai/developers/quickstart)
+- [xAI Grok subscriptions and shared usage](https://docs.x.ai/grok/faq)
+- [xAI API billing](https://docs.x.ai/console/billing)
 - [xAI image generation](https://docs.x.ai/developers/model-capabilities/images/generation)
 - [xAI image editing](https://docs.x.ai/developers/model-capabilities/images/editing)
 

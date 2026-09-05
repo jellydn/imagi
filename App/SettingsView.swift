@@ -16,7 +16,7 @@ struct SettingsView: View {
             Section {
                 Label("Your studio. Your provider.", systemImage: "key.horizontal")
                     .font(.headline)
-                Text("Connect an API account to generate images. ChatGPT Plus/Pro and Grok consumer subscriptions do not automatically include API access. API billing is separate.")
+                Text("Provider access differs. Review the subscription note for each provider, then add the API key required by its public developer flow.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             ForEach(ProviderID.allCases) { provider in
@@ -80,6 +80,7 @@ private struct ProviderSettings: View {
     @State private var removing = false
 
     var body: some View {
+        let authentication = provider.authentication
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(provider.model).font(.subheadline.monospaced())
@@ -87,6 +88,26 @@ private struct ProviderSettings: View {
                 Label(configured ? "Key saved" : "Not connected", systemImage: configured ? "checkmark.shield" : "circle.dashed")
                     .font(.caption).foregroundStyle(configured ? Color.green : Color.secondary)
             }
+            HStack {
+                Text(authentication.subscriptionTitle).font(.subheadline.weight(.semibold))
+                Spacer()
+                Label(authentication.subscriptionStatus, systemImage: "person.crop.circle.badge.questionmark")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Text(authentication.subscriptionDescription)
+                .font(.caption).foregroundStyle(.secondary)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Link("Subscription details ↗", destination: authentication.subscriptionHelpURL)
+                    Spacer()
+                    Link(authentication.apiUsageTitle, destination: authentication.apiUsageURL)
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Link("Subscription details ↗", destination: authentication.subscriptionHelpURL)
+                    Link(authentication.apiUsageTitle, destination: authentication.apiUsageURL)
+                }
+            }.font(.caption)
+            Divider()
             SecureField(configured ? "Enter replacement API key" : "Enter API key", text: $key)
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
@@ -101,9 +122,9 @@ private struct ProviderSettings: View {
                 }.disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 if configured { Button("Remove", role: .destructive) { removing = true } }
                 Spacer()
-                Link("Get API key ↗", destination: URL(string: provider == .openAI ? "https://platform.openai.com/api-keys" : "https://console.x.ai")!)
+                Link("Get API key ↗", destination: authentication.apiKeyURL)
             }.font(.subheadline)
-            Text("Saving a key does not verify access or spend API credit. The first generation checks provider access.")
+            Text("Saving a key does not verify access or use provider credit or allowance. The first generation checks provider access.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
