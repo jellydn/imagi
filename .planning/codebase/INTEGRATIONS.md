@@ -13,7 +13,7 @@
 - SDK/Client: Native `URLSession` with JSON request and base64 image response handling in `Sources/StudioCore/Providers.swift`.
 - Auth: A user-supplied official xAI API key is sent as a Bearer token; the key is entered in `App/SettingsView.swift` and read from Keychain by `App/CredentialStore.swift`.
 - Model and sizing: `grok-imagine-image-2.0` and exact requested aspect-ratio strings are defined in `Sources/StudioCore/Generation.swift`.
-- Official API credentials are required and provider API billing is separate; ChatGPT Plus/Pro and Grok consumer subscriptions do not automatically provide API access, as stated in `App/SettingsView.swift`, `Sources/StudioCore/Generation.swift`, and `README.md`.
+- Official API keys are required. ChatGPT Plus/Pro and OpenAI API billing are separate. Paid Grok plans can include a shared allowance that xAI reports with an API category, but xAI's documented developer flow still requires an API key and allowance is account- and plan-dependent. Provider-specific guidance and official account links are defined in `Sources/StudioCore/Generation.swift` and displayed by `App/SettingsView.swift`.
 - Saved credentials are not preflight-verified; the first generation checks access and can incur provider charges, as explained in `App/SettingsView.swift` and `README.md`.
 
 ## Data Storage
@@ -60,7 +60,7 @@
 
 **Required env vars:**
 - None; there are no environment-variable reads in `App/` or `Sources/StudioCore/`.
-- Runtime generation requires an official provider API key entered in `App/SettingsView.swift`, not a consumer subscription or browser credential.
+- Runtime generation requires an official provider API key entered in `App/SettingsView.swift`. The app does not accept browser credentials or OAuth tokens. xAI decides whether a request uses eligible subscription allowance or separately purchased credit.
 
 **Secrets location:**
 - API keys are stored per provider in the Apple Keychain by `App/CredentialStore.swift`; no secret values are committed or documented.

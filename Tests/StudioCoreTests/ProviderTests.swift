@@ -78,6 +78,20 @@ final class ProviderTests: XCTestCase {
         XCTAssertEqual(AspectRatio.story.value, 9.0 / 16)
     }
 
+    func testProviderAuthenticationOptionsUseOfficialHTTPSPages() {
+        XCTAssertEqual(ProviderID.openAI.authentication.subscriptionStatus, "Not supported")
+        XCTAssertEqual(ProviderID.xAI.authentication.subscriptionStatus, "No public sign-in")
+
+        for provider in ProviderID.allCases {
+            XCTAssertEqual(provider.authentication.subscriptionHelpURL.scheme, "https")
+            XCTAssertEqual(provider.authentication.apiKeyURL.scheme, "https")
+            XCTAssertEqual(provider.authentication.apiUsageURL.scheme, "https")
+        }
+
+        XCTAssertEqual(ProviderID.openAI.authentication.apiKeyURL.host, "platform.openai.com")
+        XCTAssertEqual(ProviderID.xAI.authentication.apiKeyURL.host, "console.x.ai")
+    }
+
     func testInvalidInputsRejected() {
         XCTAssertThrowsError(try ImageRequest(prompt: " \n ", options: input().options).validate())
         XCTAssertThrowsError(try input(count: 0).validate())
