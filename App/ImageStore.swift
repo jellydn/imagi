@@ -29,14 +29,14 @@ actor ImageStore {
                 let image = try cropped(original, to: ratio)
                 let name = UUID().uuidString + ".png"
                 names.append(name)
-                try png(image).write(to: url(for: name), options: .atomic)
+                let encoded = try png(image)
+                try encoded.write(to: url(for: name), options: .atomic)
                 let options: [CFString: Any] = [
                     kCGImageSourceCreateThumbnailFromImageAlways: true,
                     kCGImageSourceThumbnailMaxPixelSize: 640,
                     kCGImageSourceCreateThumbnailWithTransform: true
                 ]
-                let saved = try read(name)
-                guard let thumbnailSource = CGImageSourceCreateWithData(saved as CFData, nil),
+                guard let thumbnailSource = CGImageSourceCreateWithData(encoded as CFData, nil),
                       let thumbnail = CGImageSourceCreateThumbnailAtIndex(thumbnailSource, 0, options as CFDictionary) else {
                     throw StudioError.invalidResponse
                 }

@@ -43,10 +43,10 @@ This is a source review, not a device test or a release approval. Failure sequen
 ## Performance Bottlenecks
 
 **Generation and image saving hold several full-size representations in memory:**
-- Problem: Large batches can temporarily retain response JSON, base64 text, decoded provider `Data`, decoded `CGImage` objects, re-encoded PNG data, and saved-file data.
+- Problem: Large batches can temporarily retain response JSON, base64 text, decoded provider `Data`, decoded `CGImage` objects, and re-encoded PNG data.
 - Files: `Sources/StudioCore/Providers.swift`, `App/ImageStore.swift`, `App/StudioModel.swift`
-- Cause: `URLSession.data(for:)` buffers the whole response, `ImageResponse` decodes base64 for every item into an array, and `ImageStore.save` reads each just-written PNG again to make its thumbnail while the original response array remains alive.
-- Improvement path: Measure peak memory for four maximum-size images on each Apple target. Then consider streamed/download responses where supported and generate the thumbnail from the in-memory image without rereading the file.
+- Cause: `URLSession.data(for:)` buffers the whole response, `ImageResponse` decodes base64 for every item into an array, and `ImageStore.save` keeps the original response array alive while it decodes and re-encodes each image. Thumbnail creation now reuses the encoded PNG data instead of reading the just-written file.
+- Improvement path: Measure peak memory for four maximum-size images on each Apple target. Then consider streamed/download responses where supported.
 
 **Library search filters all fetched records in memory:**
 - Problem: Every generation or favorite is fetched before prompt search is applied.
