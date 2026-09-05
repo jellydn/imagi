@@ -8,13 +8,14 @@ Accepted — records the implemented MVP baseline and the explicit provider cons
 
 ## Context
 
-The product connects to OpenAI and Grok/xAI, but a consumer subscription cannot be assumed to grant API access. Prompts and reference images are private user content, and provider keys must not be stored in preferences or embedded in the application.
+The product connects to OpenAI and Grok/xAI, but their subscription and API access rules differ. ChatGPT subscriptions and OpenAI API billing are separate. Paid Grok subscriptions can include a shared allowance that xAI reports across API and other Grok products, while xAI's public image API setup still authenticates with an API key. Prompts and reference images are private user content, and provider keys must not be stored in preferences or embedded in the application.
 
 OpenAI and xAI have different image-edit request formats. Their authentication and model capabilities can change independently of the studio UI.
 
 ## Decision
 
-- Require user-supplied official API keys with provider API billing. Do not use consumer-session cookies, private endpoints, or subscription workarounds. `App/SettingsView.swift` explains this before key entry.
+- Require user-supplied official API keys. Explain each provider's current subscription rules before key entry: OpenAI requires separate API billing; eligible xAI plans can show API use in their shared usage pool, but the documented developer authentication path remains an API key and allowance is account- and plan-dependent.
+- Do not use consumer-session cookies, private endpoints, another application's OAuth client, or undocumented subscription workarounds. Neither provider documents a general subscription OAuth client-registration flow for this native image app.
 - Define a `Sendable ImageGenerationProvider` protocol and route requests with `ImageGenerationService` in `Sources/StudioCore/Generation.swift`. Each call selects one provider.
 - Implement direct HTTPS requests with `URLSession` in `Sources/StudioCore/Providers.swift`. OpenAI uses JSON generation requests and multipart edits; xAI uses JSON for both and embeds a PNG data URI for edits.
 - Store separate provider keys in the data-protection Keychain through `App/CredentialStore.swift`. Use `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`; after first unlock, credentials can remain accessible during the limited background execution window. Store only non-secret preferences in UserDefaults.
@@ -33,7 +34,7 @@ OpenAI and xAI have different image-edit request formats. Their authentication a
 
 ### Negative
 
-- Users need API access and funds; a paid consumer subscription alone is insufficient.
+- Users always need an API key. OpenAI users also need separate API funds. xAI controls whether subscription allowance, extra usage credit, or API billing applies to a request under its current account rules.
 - Model availability, rate limits, and provider schema changes can require app updates. Current model identifiers are fixed in `Sources/StudioCore/Generation.swift`.
 - Prompts and reference images leave the device under the selected provider's policy. Keychain does not protect content after transmission; privacy disclosures need review before release.
 - Device-only key storage does not provide credential sync. After-first-unlock access is less restrictive than access only while unlocked.

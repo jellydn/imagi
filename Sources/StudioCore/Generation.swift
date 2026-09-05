@@ -1,10 +1,44 @@
 import Foundation
 
+public struct ProviderAuthentication: Equatable, Sendable {
+    public let subscriptionTitle: String
+    public let subscriptionStatus: String
+    public let subscriptionDescription: String
+    public let subscriptionHelpURL: URL
+    public let apiKeyURL: URL
+    public let apiUsageTitle: String
+    public let apiUsageURL: URL
+}
+
 public enum ProviderID: String, CaseIterable, Codable, Sendable, Identifiable {
     case openAI, xAI
     public var id: String { rawValue }
     public var title: String { self == .openAI ? "OpenAI" : "Grok · xAI" }
     public var model: String { self == .openAI ? "gpt-image-1" : "grok-imagine-image-2.0" }
+    public var authentication: ProviderAuthentication {
+        switch self {
+        case .openAI:
+            return ProviderAuthentication(
+                subscriptionTitle: "ChatGPT subscriptions",
+                subscriptionStatus: "Not supported",
+                subscriptionDescription: "ChatGPT Plus and Pro do not include OpenAI API usage. OpenAI API billing is separate, and there is no supported ChatGPT sign-in for this app.",
+                subscriptionHelpURL: URL(string: "https://help.openai.com/en/articles/9039756")!,
+                apiKeyURL: URL(string: "https://platform.openai.com/api-keys")!,
+                apiUsageTitle: "Set up API billing ↗",
+                apiUsageURL: URL(string: "https://platform.openai.com/settings/organization/billing/overview")!
+            )
+        case .xAI:
+            return ProviderAuthentication(
+                subscriptionTitle: "Grok subscriptions",
+                subscriptionStatus: "No public sign-in",
+                subscriptionDescription: "Paid Grok plans can include a shared usage pool with an API category. xAI does not document a general OAuth registration flow for this app, so use its public API-key flow. Allowance depends on your account and plan.",
+                subscriptionHelpURL: URL(string: "https://docs.x.ai/grok/faq")!,
+                apiKeyURL: URL(string: "https://console.x.ai/team/default/api-keys")!,
+                apiUsageTitle: "Manage API usage ↗",
+                apiUsageURL: URL(string: "https://console.x.ai/team/default/billing")!
+            )
+        }
+    }
 }
 
 public enum AspectRatio: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -65,7 +99,7 @@ public enum StudioError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidRequest(let message): return message
-        case .missingCredential: return "Add an API key for this provider in Settings. Consumer subscriptions do not include API access."
+        case .missingCredential: return "Add an API key for this provider in Settings. Subscription sign-in is not available."
         case .http(401): return "The API key was rejected. Check it in Settings."
         case .http(403): return "This account cannot use the image model. Check provider access and organization verification."
         case .http(429): return "The provider limit was reached. Check API credit and rate limits before you try again."
