@@ -68,7 +68,7 @@ targets:
         PRODUCT_NAME: ImageStudio
         PRODUCT_BUNDLE_IDENTIFIER: com.example.imagestudio.mac
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.graphics-design
-        SPARKLE_PUBLIC_ED_KEY: ""
+        SPARKLE_PUBLIC_ED_KEY: HO52CC+LHhXAWKpMzuQH8ghph50xsRoN0CD9uYzhiCc=
         INFOPLIST_KEY_SUFeedURL: https://raw.githubusercontent.com/jellydn/imagi/main/appcast.xml
         INFOPLIST_KEY_SUPublicEDKey: $(SPARKLE_PUBLIC_ED_KEY)
         INFOPLIST_KEY_SUEnableAutomaticChecks: YES
