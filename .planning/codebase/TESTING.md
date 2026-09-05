@@ -28,7 +28,7 @@ xcodegen generate && xcodebuild test -project ImageStudio.xcodeproj -scheme Imag
 - Test files and XCTestCase classes end in `Tests`. Individual test methods start with `test` and state the expected behavior.
 
 **Structure:**
-```
+```text
 Tests/StudioCoreTests/ProviderTests.swift  # Request building, service routing, decoding, errors, cancellation
 NativeTests/LocalLibraryTests.swift        # SwiftData persistence and ImageStore filesystem/image behavior
 ```
