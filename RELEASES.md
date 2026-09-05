@@ -9,11 +9,11 @@ GitHub Releases ship the **Mac** app only (`ImageStudio-<version>.dmg` and `.zip
 - CI (`.github/workflows/ci.yml`) runs on `push` to `main` and all PRs: `swift test`, `xcodegen generate`, then `ImageStudio-NativeTests`.
 - **Auto-release** (`.github/workflows/auto-release.yml`) runs on `push` to `main`:
   - If HEAD has no tag, it uses `MARKETING_VERSION` from `project.yml` for the first release, then increments the patch (for example `v1.0.0` → `v1.0.1`)
-  - Creates a Git tag
-  - Builds and publishes unsigned Mac artifacts to GitHub Releases
+  - Updates `project.yml`, creates a Git tag, then calls the shared release workflow
 - Manual release (`.github/workflows/release.yml`) builds and publishes on:
   - tag push: `v*` (example: `v1.0.0`)
-  - manual dispatch with a `version` input (example: `v1.0.0`)
+  - manual dispatch with an existing `tag` input (example: `v1.0.0`)
+- The shared release workflow builds and publishes unsigned Mac artifacts, then calls `update-appcast.yml` directly. This direct call is required because releases created with `GITHUB_TOKEN` do not start another workflow from a `release` event.
 
 ## Auto-Update (Mac)
 
@@ -21,10 +21,7 @@ The Mac app uses [Sparkle](https://sparkle-project.org/). Checks run on launch. 
 
 The feed is `appcast.xml` at the repo root (`https://raw.githubusercontent.com/jellydn/imagi/main/appcast.xml`). `update-appcast.yml` signs the DMG with EdDSA after each GitHub Release.
 
-1. Generate keys with Sparkle `generate_keys`.
-2. Put the **public** key in `project.yml` as `SPARKLE_PUBLIC_ED_KEY` on `ImageStudio-Mac`.
-3. Put the **private** key in the repo secret `SPARKLE_PRIVATE_KEY`.
-4. Until the public key is set, Settings shows that update signing is not configured and Sparkle stays off.
+The public EdDSA key is committed in `project.yml` as `SPARKLE_PUBLIC_ED_KEY`. Put its matching **private** key in the repository secret `SPARKLE_PRIVATE_KEY`. Never commit the private key. To replace the key pair, generate new keys with Sparkle `generate_keys`, update both locations together, and publish a new build.
 
 ## Creating a Manual Release
 

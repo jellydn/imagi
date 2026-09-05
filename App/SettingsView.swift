@@ -57,7 +57,7 @@ struct SettingsView: View {
             #if os(macOS)
             Section {
                 if !sparkleUpdater.isConfigured {
-                    Text("Update signing is not configured. Set SPARKLE_PUBLIC_ED_KEY in project.yml and the SPARKLE_PRIVATE_KEY GitHub secret.")
+                    Text("The public update-signing key is not configured in this build.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Toggle("Automatically check for updates", isOn: Binding(

@@ -45,7 +45,7 @@ Download `ImageStudio-<version>.dmg` or `.zip` from [Releases](https://github.co
 
 Merges to `main` auto-tag and publish a Mac release. iPhone/iPad still need Xcode and a signing team.
 
-The Mac app can check for updates with [Sparkle](https://sparkle-project.org/) after you set `SPARKLE_PUBLIC_ED_KEY` and the `SPARKLE_PRIVATE_KEY` secret. See [RELEASES.md](./RELEASES.md).
+The Mac app checks for updates with [Sparkle](https://sparkle-project.org/). The public signing key is in `project.yml`; releases require the matching `SPARKLE_PRIVATE_KEY` repository secret. See [RELEASES.md](./RELEASES.md).
 
 ## Getting started
 

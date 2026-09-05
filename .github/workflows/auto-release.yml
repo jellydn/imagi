@@ -13,8 +13,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  auto-release:
+  prepare-release:
     runs-on: macos-26
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -22,21 +24,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
       - name: Check if current commit already has a tag
         id: check_tag
         run: |
           git fetch --force --tags
-          current_tags="$(git tag --points-at HEAD)"
+          current_tags="$(git tag --points-at HEAD | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/')"
           if [[ -n "$current_tags" ]]; then
-            echo "Current commit already has tags: $current_tags"
+            echo "Current commit already has release tags: $current_tags"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -46,7 +40,7 @@ jobs:
         if: steps.check_tag.outputs.skip != 'true'
         id: version
         run: |
-          latest_tag="$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)"
+          latest_tag="$(git tag --sort=-version:refname | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/ { print; exit }')"
           if [[ -z "$latest_tag" ]]; then
             yml_version="$(awk '/MARKETING_VERSION:/ { print $2; exit }' project.yml | tr -d '"')"
             latest_tag="v${yml_version:-1.0.0}"
@@ -66,9 +60,11 @@ jobs:
           build_number="$((major * 1000000 + minor * 1000 + patch))"
 
           echo "New version: $new_version"
-          echo "version=$new_version" >> "$GITHUB_OUTPUT"
-          echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
-          echo "build_number=$build_number" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$new_version"
+            echo "tag=$new_tag"
+            echo "build_number=$build_number"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Update project.yml version
         if: steps.check_tag.outputs.skip != 'true'
@@ -88,37 +84,23 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add project.yml
           git diff --staged --quiet || git commit -m "chore: bump version to $NEW_TAG [skip ci]"
-          git pull --rebase -X ours origin main || { git rebase --abort || true; exit 1; }
-          if git tag | grep -q "^${NEW_TAG}$"; then
-            echo "Tag ${NEW_TAG} already exists after rebase; skipping tag creation and push."
-            exit 0
+          git pull --rebase origin main || { git rebase --abort || true; exit 1; }
+          git fetch --force --tags
+          if git rev-parse --verify --quiet "refs/tags/${NEW_TAG}" >/dev/null; then
+            tag_commit="$(git rev-list -n 1 "$NEW_TAG")"
+            if [[ "$tag_commit" != "$(git rev-parse HEAD)" ]]; then
+              echo "Tag ${NEW_TAG} already points to ${tag_commit}; refusing to publish a different commit."
+              exit 1
+            fi
+          else
+            git tag -a "$NEW_TAG" -m "Auto-release $NEW_TAG"
           fi
-          git tag -a "$NEW_TAG" -m "Auto-release $NEW_TAG"
-          git push origin main "$NEW_TAG"
+          git push --atomic origin main "$NEW_TAG"
 
-      - name: Build DMG and ZIP
-        if: steps.check_tag.outputs.skip != 'true'
-        id: assets
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
-        run: scripts/release/build-release-assets.sh
-
-      - name: Upload workflow artifacts
-        if: steps.check_tag.outputs.skip != 'true'
-        uses: actions/upload-artifact@v7
-        with:
-          name: imagi-release-${{ steps.version.outputs.tag }}
-          path: |
-            ${{ steps.assets.outputs.dmg_path }}
-            ${{ steps.assets.outputs.zip_path }}
-
-      - name: Publish GitHub release
-        if: steps.check_tag.outputs.skip != 'true'
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          generate_release_notes: true
-          files: |
-            ${{ steps.assets.outputs.dmg_path }}
-            ${{ steps.assets.outputs.zip_path }}
+  release:
+    needs: prepare-release
+    if: needs.prepare-release.outputs.tag != ''
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.prepare-release.outputs.tag }}
+    secrets: inherit

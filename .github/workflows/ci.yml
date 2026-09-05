@@ -27,6 +27,9 @@ jobs:
       - name: StudioCore tests
         run: swift test
 
+      - name: Release tooling tests
+        run: python3 scripts/release/test_update_appcast.py
+
       - name: Generate Xcode project
         run: xcodegen generate
 
