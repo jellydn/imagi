@@ -114,7 +114,10 @@ final class ProviderTests: XCTestCase {
         do {
             _ = try await service.generate(input(), apiKey: " \n")
             XCTFail("Expected credential failure")
-        } catch { XCTAssertTrue(error is StudioError) }
+        } catch {
+            XCTAssertTrue(error is StudioError)
+            XCTAssertEqual(error.localizedDescription, "Add an API key for this provider in Settings. Subscription sign-in is not available.")
+        }
         let calls = await provider.calls
         XCTAssertEqual(calls, 0)
     }

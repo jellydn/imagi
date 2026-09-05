@@ -32,7 +32,7 @@ Built and maintained by [@jellydn](https://github.com/jellydn).
 - iOS/iPadOS 17 and macOS 14
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 - [just](https://github.com/casey/just) — optional shortcuts (see [`justfile`](./justfile))
-- A funded [OpenAI](https://platform.openai.com/api-keys) and/or [xAI](https://console.x.ai) API key
+- A configured [OpenAI](https://platform.openai.com/api-keys) and/or [xAI](https://console.x.ai/team/default/api-keys) API key
 
 ```sh
 brew install xcodegen just

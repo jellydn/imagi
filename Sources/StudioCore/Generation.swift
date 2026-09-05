@@ -99,7 +99,7 @@ public enum StudioError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidRequest(let message): return message
-        case .missingCredential: return "Add an API key for this provider in Settings. Consumer subscriptions do not include API access."
+        case .missingCredential: return "Add an API key for this provider in Settings. Subscription sign-in is not available."
         case .http(401): return "The API key was rejected. Check it in Settings."
         case .http(403): return "This account cannot use the image model. Check provider access and organization verification."
         case .http(429): return "The provider limit was reached. Check API credit and rate limits before you try again."
