@@ -3,6 +3,7 @@
 [![Swift 5.9+](https://img.shields.io/badge/Swift-5.9+-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![iOS 17+](https://img.shields.io/badge/iOS-17+-000000?logo=apple&logoColor=white)](https://www.apple.com/ios/)
 [![macOS 14+](https://img.shields.io/badge/macOS-14+-000000?logo=apple&logoColor=white)](https://www.apple.com/macos/)
+[![CI](https://github.com/jellydn/imagi/actions/workflows/ci.yml/badge.svg)](https://github.com/jellydn/imagi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![AGENTS.md](https://img.shields.io/badge/AGENTS.md-supported-green)](./AGENTS.md)
 [![Twitter: jellydn](https://img.shields.io/twitter/follow/jellydn.svg?style=social)](https://twitter.com/jellydn)
@@ -37,6 +38,14 @@ Built and maintained by [@jellydn](https://github.com/jellydn).
 ```sh
 brew install xcodegen just
 ```
+
+## GitHub Releases (Mac)
+
+Download `ImageStudio-<version>.dmg` or `.zip` from [Releases](https://github.com/jellydn/imagi/releases). Builds are **unsigned** (no Apple Developer account). First launch: right-click the app → **Open**, or use **System Settings > Privacy & Security > Open Anyway**. Details: [RELEASES.md](./RELEASES.md).
+
+Merges to `main` auto-tag and publish a Mac release. iPhone/iPad still need Xcode and a signing team.
+
+The Mac app checks for updates with [Sparkle](https://sparkle-project.org/). The public signing key is in `project.yml`; releases require the matching `SPARKLE_PRIVATE_KEY` repository secret. See [RELEASES.md](./RELEASES.md).
 
 ## Getting started
 

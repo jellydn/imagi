@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, e.g. v1.0.0'
+        required: true
+      prerelease:
+        description: 'Publish as a GitHub prerelease'
+        required: true
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Existing release tag, e.g. v1.0.0'
+        required: true
+        type: string
+      prerelease:
+        description: 'Publish as a GitHub prerelease'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+
+    steps:
+      - name: Resolve release tag
+        id: vars
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag="${GITHUB_REF_NAME}"
+          else
+            tag="$INPUT_TAG"
+          fi
+
+          if [[ -z "$tag" ]]; then
+            echo "Unable to resolve release tag. Provide workflow input tag (e.g. v1.0.0) or create a v* tag."
+            exit 1
+          fi
+
+          if [[ ! "$tag" =~ ^v([0-9]+)\.([0-9]+)(\.([0-9]+))?$ ]]; then
+            echo "Invalid semantic version tag: $tag"
+            exit 1
+          fi
+          version="${tag#v}"
+          IFS='.' read -r major minor patch <<< "$version"
+          patch="${patch:-0}"
+          build_number="$((major * 1000000 + minor * 1000 + patch))"
+
+          {
+            echo "tag=$tag"
+            echo "version=$version"
+            echo "build_number=$build_number"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.vars.outputs.tag }}
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build DMG and ZIP
+        id: assets
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+          BUILD_NUMBER: ${{ steps.vars.outputs.build_number }}
+        run: scripts/release/build-release-assets.sh
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: imagi-release-${{ steps.vars.outputs.tag }}
+          path: |
+            ${{ steps.assets.outputs.dmg_path }}
+            ${{ steps.assets.outputs.zip_path }}
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          generate_release_notes: true
+          prerelease: ${{ inputs.prerelease }}
+          files: |
+            ${{ steps.assets.outputs.dmg_path }}
+            ${{ steps.assets.outputs.zip_path }}
+
+  update-appcast:
+    needs: release
+    uses: ./.github/workflows/update-appcast.yml
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    secrets: inherit

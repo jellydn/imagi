@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: macos-26
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: StudioCore tests
+        run: swift test
+
+      - name: Release tooling tests
+        run: python3 scripts/release/test_update_appcast.py
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: NativeTests
+        run: |
+          xcodebuild test \
+            -project ImageStudio.xcodeproj \
+            -scheme ImageStudio-NativeTests \
+            -destination 'platform=macOS' \
+            -derivedDataPath /tmp/imagi-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""

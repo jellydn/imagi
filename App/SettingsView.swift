@@ -9,6 +9,9 @@ struct SettingsView: View {
     @AppStorage("defaultRatio") private var defaultRatio = AspectRatio.square.rawValue
     @AppStorage("notifyOnCompletion") private var notifyOnCompletion = false
     @Environment(StudioModel.self) private var studio
+    #if os(macOS)
+    @EnvironmentObject private var sparkleUpdater: SparkleUpdater
+    #endif
     @State private var storage = "Calculating…"
 
     var body: some View {
@@ -51,6 +54,25 @@ struct SettingsView: View {
                 }))
             } header: { Text("Notifications") }
             footer: { Text("Sent only when generation finishes while the app is in the background. iOS limits background time. Long requests can stop if you leave the app; keep it open for reliable results.") }
+            #if os(macOS)
+            Section {
+                if !sparkleUpdater.isConfigured {
+                    Text("The public update-signing key is not configured in this build.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Toggle("Automatically check for updates", isOn: Binding(
+                    get: { sparkleUpdater.automaticallyChecksForUpdates },
+                    set: { sparkleUpdater.setAutomaticallyChecksForUpdates($0) }
+                )).disabled(!sparkleUpdater.isConfigured)
+                Toggle("Automatically download updates", isOn: Binding(
+                    get: { sparkleUpdater.automaticallyDownloadsUpdates },
+                    set: { sparkleUpdater.setAutomaticallyDownloadsUpdates($0) }
+                )).disabled(!sparkleUpdater.isConfigured || !sparkleUpdater.automaticallyChecksForUpdates)
+                Button("Check for Updates Now") { sparkleUpdater.checkForUpdates() }
+                    .disabled(!sparkleUpdater.isConfigured || !sparkleUpdater.canCheckForUpdates)
+            } header: { Text("Updates") }
+            footer: { Text("Mac updates use Sparkle and the GitHub Releases appcast. Builds are unsigned until you add an Apple Developer certificate.") }
+            #endif
             Section("Local storage") {
                 LabeledContent("Images and thumbnails", value: storage)
                 Text("History and favorites stay on this device. Images are stored in the app’s private folder. Delete individual images from History to free space. Deleting the app removes its library.")

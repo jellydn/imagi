@@ -20,4 +20,5 @@ hooks = [
 repo = "local"
 hooks = [
     { id = "swift-test", name = "StudioCore tests", language = "system", entry = "swift test", pass_filenames = false },
+    { id = "release-test", name = "Release tooling tests", language = "system", entry = "python3 scripts/release/test_update_appcast.py", pass_filenames = false },
 ]

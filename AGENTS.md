@@ -6,7 +6,9 @@ Native SwiftUI Image Studio. Three app targets share `App/` plus local Swift pac
 
 Do not edit or commit `*.xcodeproj`. It is generated and gitignored. Change `project.yml`, then run `just generate` (`xcodegen generate`).
 
-`just` recipes: `test`, `test-filter FILTER`, `native-test`, `build-iphone` / `build-ipad` / `build-mac`, `prek`.
+`just` recipes: `test`, `test-filter FILTER`, `native-test`, `build-iphone` / `build-ipad` / `build-mac`, `release-assets`, `prek`.
+
+CI (`macos-26`) runs `swift test` then NativeTests after `xcodegen generate`. Tag `v*` or merge to `main` publishes an unsigned Mac DMG/ZIP. Sparkle is Mac-only (`App/SparkleUpdater.swift`); keep `import Sparkle` behind `#if os(macOS)`. Public EdDSA key lives in `project.yml`; private key is the `SPARKLE_PRIVATE_KEY` GitHub secret. Do not commit the private key. See `RELEASES.md`.
 
 ```sh
 swift test

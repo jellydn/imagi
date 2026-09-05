@@ -56,6 +56,10 @@ prek:
 prek-install:
     prek install
 
+# Unsigned Mac DMG + ZIP (VERSION=1.0.0 BUILD_NUMBER=1)
+release-assets:
+    scripts/release/build-release-assets.sh
+
 # Remove SwiftPM and generated Xcode output
 clean:
-    rm -rf .build/ .swiftpm/ {{project}}.xcodeproj DerivedData/
+    rm -rf .build/ .swiftpm/ {{project}}.xcodeproj DerivedData/ Configuration/
