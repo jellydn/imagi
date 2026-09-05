@@ -1,66 +1,97 @@
-# Image Studio
+# Welcome to Image Studio 👋
 
-A native SwiftUI image studio for iPhone, iPad, and Mac. Describe → generate variants → compare → refine → save.
+[![Swift 5.9+](https://img.shields.io/badge/Swift-5.9+-F05138?logo=swift&logoColor=white)](https://swift.org)
+[![iOS 17+](https://img.shields.io/badge/iOS-17+-000000?logo=apple&logoColor=white)](https://www.apple.com/ios/)
+[![macOS 14+](https://img.shields.io/badge/macOS-14+-000000?logo=apple&logoColor=white)](https://www.apple.com/macos/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![AGENTS.md](https://img.shields.io/badge/AGENTS.md-supported-green)](./AGENTS.md)
+[![Twitter: jellydn](https://img.shields.io/twitter/follow/jellydn.svg?style=social)](https://twitter.com/jellydn)
 
-## Open on a Mac
+> A native SwiftUI image studio for iPhone, iPad, and Mac. Describe → generate variants → compare → refine → save.
 
-Requires Xcode 16 or later and [XcodeGen](https://github.com/yonaskolb/XcodeGen). Minimum OS versions: iOS/iPadOS 17 and macOS 14.
+Three app targets share `App/` and the local `StudioCore` Swift package. Each app keeps its own local library and API keys. There is no iCloud sync, analytics, or app backend.
+
+Built and maintained by [@jellydn](https://github.com/jellydn).
+
+## Features
+
+- **Create, History, Favorites, Settings** — native tabs on iPhone, iPad, and Mac
+- **Wide layout** — side-by-side composer and two-column comparison on iPad/Mac; stacked layout in narrow windows
+- **OpenAI** — `gpt-image-1` generations and multipart image edits
+- **xAI** — `grok-imagine-image-2.0` generations and JSON image edits
+- **Ratios** — 1:1, 4:3, 3:4, 16:9, 9:16. xAI gets the exact ratio. OpenAI uses a native size, then **center-crops** to the requested ratio (the saved file is the cropped image)
+- **Local library** — SwiftData metadata, prompt search, favorites, parent-image links, PNG + thumbnails in Application Support
+- **Export** — ShareLink, Photos, context menus, confirmed deletion
+- **Credentials** — Keychain only. Defaults and notification choice live in preferences
+
+**ChatGPT Plus/Pro and Grok consumer subscriptions are not API credentials.** This app does not use cookies, private endpoints, or subscription workarounds. Saving a key does not verify it; the first real request does. Each generation or edit can incur provider charges. There are no automatic paid retries.
+
+## Prerequisites
+
+- Xcode 16 or later
+- iOS/iPadOS 17 and macOS 14
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+- [just](https://github.com/casey/just) — optional shortcuts (see [`justfile`](./justfile))
+- A funded [OpenAI](https://platform.openai.com/api-keys) and/or [xAI](https://console.x.ai) API key
 
 ```sh
-brew install xcodegen
-xcodegen generate
-open ImageStudio.xcodeproj
+brew install xcodegen just
 ```
 
-Select `ImageStudio-iPhone`, `ImageStudio-iPad`, or `ImageStudio-Mac`. Set your signing team and replace the example bundle identifiers before running on a physical device. Simulator builds do not need a team. The three app targets share `App/` and the local `StudioCore` Swift package. They have separate local libraries and credentials; iCloud sync is not included.
+## Getting started
+
+```sh
+git clone https://github.com/jellydn/imagi.git
+cd imagi
+just generate   # xcodegen generate
+just open
+```
+
+Select `ImageStudio-iPhone`, `ImageStudio-iPad`, or `ImageStudio-Mac`. Simulator and Mac builds do not need a signing team. Before a physical device, set your team and replace the example bundle IDs (`com.example.imagestudio.*`).
+
+After you change `project.yml`, run `just generate` again. Do not edit `ImageStudio.xcodeproj` (generated, gitignored).
 
 ## First image
 
-1. Open Settings and follow **Get API key** for your provider.
+1. Open **Settings** and follow **Get API key** for your provider.
 2. Enable API billing with that provider. Save the key in the app.
-3. Open Create, enter a prompt, and choose 1–4 variants and a ratio.
-4. Select Generate. Images are saved to History automatically.
-5. Open a variant. Select Refine to use it as the reference, or use Save to Photos / Share.
+3. Open **Create**, enter a prompt, and choose 1–4 variants and a ratio.
+4. Select **Generate**. Images are saved to History automatically.
+5. Open a variant. Select **Refine** to use it as the reference, or use **Save to Photos** / **Share**.
 
-**ChatGPT Plus/Pro and Grok consumer subscriptions are not API credentials.** This app does not use browser cookies, private endpoints, or subscription workarounds. A saved key is not reported as verified until a real request succeeds. Each generation/edit can incur provider charges. There are no automatic paid retries. Regenerate restores the original prompt, settings, and reference (for an edit); the user selects Generate to confirm a new request.
+**Regenerate** restores the original prompt, settings, and reference (for an edit). You still select **Generate** to confirm a new paid request.
 
-## Included
-
-- Native Create, History, Favorites, and Settings tabs.
-- Side-by-side composer and two-column comparison grid on wide iPad/Mac windows; stacked layout in narrow windows.
-- OpenAI `gpt-image-1` generations and multipart image edits.
-- xAI `grok-imagine-image-2.0` generations and JSON image edits.
-- Ratios 1:1, 4:3, 3:4, 16:9, and 9:16. xAI receives the exact ratio. OpenAI uses a supported native size and **center-crops** to the requested ratio, as shown in the composer. Cropping can remove edge detail; the saved image is the cropped version.
-- SwiftData metadata, prompt search, favorites, timestamps, and parent-image links. The viewer can go back to the reference or forward to its refinements.
-- PNG files and smaller gallery thumbnails in Application Support. Image normalization, cropping, and disk work run outside the main actor. Failed batches clean up their files.
-- iOS full-screen viewer and Mac viewer sheet; fit/enlarge, native ShareLink, Photos export, context menus, and confirmed deletion.
-- Keychain credentials, per-device defaults, storage size, iOS haptics, optional background completion notifications.
-- Loading, cancellation, missing-key, provider-error, empty-gallery, unavailable-image, and persistence-open-error states.
-
-## Architecture
-
-`SwiftUI → StudioModel → ImageGenerationService → ImageGenerationProvider → OpenAIProvider / XAIProvider`
-
-`StudioModel` stores successful generation metadata in SwiftData and image files through `ImageStore`. A refinement stores the selected image ID on its new generation; it never overwrites the original. Deleting a reference keeps its descendants, but that edit can no longer be regenerated from the missing reference. Empty generation metadata remains in History after its last image is deleted.
-
-Keys stay in Keychain. Preferences contain only defaults and notification choice. The app has no analytics or application backend. Prompts and reference images are sent directly to the selected provider under its data policy. Review the privacy manifest and App Store privacy answers against your final distribution and the providers' current terms.
-
-## Verification
-
-Checked in the Linux orb with Swift 6.0.3:
-
-- `swift test`: 13 tests passed, 0 failures.
-- Swift syntax parsing for both iOS and macOS conditional branches: passed. This is not Apple SDK type-checking.
-- Project YAML and privacy property list parsing: passed.
-- Apple builds, three native tests, rendered UI, Photos/Keychain integration, and live API generation: not run; require a Mac and, for generation, a funded API account.
-
-Shared package tests (no keys, no paid network calls):
+## Development
 
 ```sh
-swift test
+just test                          # StudioCore package tests (no keys, no paid network)
+just test-filter ProviderTests.testOpenAIGenerationUsesNativeSizeAndNumericCount
+just native-test                   # macOS SwiftData + ImageStore
+just build-iphone                  # iOS Simulator
+just build-ipad
+just build-mac
+just prek                          # hooks on all tracked files
+just prek-install                  # Git shims
 ```
 
-Apple image-storage and SwiftData tests:
+`swift test` covers `StudioCore` only. It can run on Linux. It does not type-check Apple frameworks.
+
+## Run tests
+
+Shared package tests:
+
+```sh
+just test
+# or: swift test
+```
+
+Apple image-storage and SwiftData tests (Mac):
+
+```sh
+just native-test
+```
+
+Equivalent `xcodebuild`:
 
 ```sh
 xcodegen generate
@@ -68,32 +99,31 @@ xcodebuild test -project ImageStudio.xcodeproj -scheme ImageStudio-NativeTests \
   -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
 ```
 
-Build all app targets on a Mac:
+## Architecture
 
-```sh
-xcodebuild -project ImageStudio.xcodeproj -scheme ImageStudio-iPhone \
-  -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
-xcodebuild -project ImageStudio.xcodeproj -scheme ImageStudio-iPad \
-  -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
-xcodebuild -project ImageStudio.xcodeproj -scheme ImageStudio-Mac \
-  -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build
+```
+SwiftUI → StudioModel → ImageGenerationService → OpenAIProvider / XAIProvider
 ```
 
-Before release, run these device checks:
+`StudioModel` stores successful generation metadata in SwiftData and image files through `ImageStore`. A refinement stores the selected image ID on a new generation; it never overwrites the original. Deleting a reference keeps descendants, but that edit cannot be regenerated until you pick a new reference. Empty generation rows can remain in History after the last image is deleted.
 
-- Generate four variants with each provider; confirm the grid, saved dimensions, and actual image content.
-- Refine twice, navigate back and forward, relaunch, and confirm history/favorites remain.
-- Check narrow iPhone, iPad split view, and Mac windows in light/dark mode and large text. Use VoiceOver on prompt controls, image actions, and errors.
-- Export to Photos with permission allowed and denied; share to Files and one installed messaging app.
-- Try an invalid key, no credit, offline mode, cancellation, and background expiration. Confirm that failed requests do not create empty successful generations.
-- Remove a key, relaunch, and confirm that the provider cannot generate without reconfiguration.
-- Add final app icons and distribution signing before App Store submission.
+Keys stay in Keychain. Prompts and reference images go directly to the selected provider under its data policy.
 
-The Linux orb can run the shared Swift package and parse Swift syntax. It cannot type-check Apple frameworks, run the Apple tests, render SwiftUI, or produce a signed app. Live generation also needs your funded API account. These Apple/device and live-provider checks must be completed before release.
+| Layer       | Choice                                                                 |
+| ----------- | ---------------------------------------------------------------------- |
+| UI          | SwiftUI (`App/`)                                                       |
+| Persistence | SwiftData (`cloudKitDatabase: .none`)                                  |
+| Images      | PNG + `{name}.thumb.png` (max 640px) via `ImageStore`                  |
+| Keys        | Keychain (`CredentialStore`)                                           |
+| Core        | local Swift package `StudioCore`                                       |
+| Project     | XcodeGen (`project.yml`)                                               |
+| Tasks       | [just](https://github.com/casey/just) · [prek](https://prek.j178.dev/) |
+
+Agent notes: [`AGENTS.md`](./AGENTS.md).
 
 ## Background limits
 
-Generation uses a cancellable foreground URLSession request with up to five minutes of request timeout. iOS grants only limited background execution time. When that time expires, the app cancels the request and explains that the provider may still charge. Notifications are best-effort and only fire if generation completes while the process can still run. There is no guarantee of completion after suspension or force-quit. Keep the app open for reliable generation.
+Generation uses a cancellable URLSession request with a 300s timeout. iOS grants only limited background time. When that time expires, the app cancels the request and explains that the provider may still charge. Notifications are best-effort. Keep the app open for reliable generation.
 
 ## Provider references
 
@@ -101,4 +131,26 @@ Generation uses a cancellable foreground URLSession request with up to five minu
 - [xAI image generation](https://docs.x.ai/developers/model-capabilities/images/generation)
 - [xAI image editing](https://docs.x.ai/developers/model-capabilities/images/editing)
 
-Model availability depends on the API account and can change. OpenAI can require organization verification. Provider models are isolated in `Sources/StudioCore/Generation.swift`; request formats are in `Providers.swift`.
+Model availability depends on the API account and can change. OpenAI can require organization verification. Provider models live in `Sources/StudioCore/Generation.swift`; request formats live in `Providers.swift`.
+
+## Author
+
+👤 **Huynh Duc Dung**
+
+- Website: [productsway.com](https://productsway.com/)
+- Twitter: [@jellydn](https://twitter.com/jellydn)
+- GitHub: [@jellydn](https://github.com/jellydn)
+
+## Show your support
+
+[![kofi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/dunghd)
+[![paypal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/dunghd)
+[![buymeacoffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/dunghd)
+
+Give a ⭐️ if this project helped you!
+
+[![Stargazers repo roster for @jellydn/imagi](https://reporoster.com/stars/jellydn/imagi)](https://github.com/jellydn/imagi/stargazers)
+
+## License
+
+This project is [MIT](./LICENSE) licensed.
