@@ -13,8 +13,8 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.1"
-    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1
+    CURRENT_PROJECT_VERSION: 1000
     GENERATE_INFOPLIST_FILE: YES
     INFOPLIST_KEY_CFBundleDisplayName: Image Studio
     INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Save images you choose to your photo library.
