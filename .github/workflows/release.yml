@@ -9,12 +9,22 @@ on:
       tag:
         description: 'Release tag, e.g. v1.0.0'
         required: true
+      prerelease:
+        description: 'Publish as a GitHub prerelease'
+        required: true
+        type: boolean
+        default: true
   workflow_call:
     inputs:
       tag:
         description: 'Existing release tag, e.g. v1.0.0'
         required: true
         type: string
+      prerelease:
+        description: 'Publish as a GitHub prerelease'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -42,12 +52,13 @@ jobs:
             exit 1
           fi
 
-          if [[ ! "$tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+          if [[ ! "$tag" =~ ^v([0-9]+)\.([0-9]+)(\.([0-9]+))?$ ]]; then
             echo "Invalid semantic version tag: $tag"
             exit 1
           fi
           version="${tag#v}"
           IFS='.' read -r major minor patch <<< "$version"
+          patch="${patch:-0}"
           build_number="$((major * 1000000 + minor * 1000 + patch))"
 
           {
@@ -89,6 +100,7 @@ jobs:
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           generate_release_notes: true
+          prerelease: ${{ inputs.prerelease }}
           files: |
             ${{ steps.assets.outputs.dmg_path }}
             ${{ steps.assets.outputs.zip_path }}

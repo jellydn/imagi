@@ -64,6 +64,7 @@ jobs:
           echo "Using tag: $TAG"
           VERSION="${TAG#v}"
           IFS='.' read -r major minor patch <<< "$VERSION"
+          patch="${patch:-0}"
           for part in "$major" "$minor" "$patch"; do
             if ! [[ "$part" =~ ^[0-9]+$ ]]; then
               echo "Invalid semantic version: $VERSION"

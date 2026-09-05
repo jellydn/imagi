@@ -17,6 +17,7 @@ jobs:
     runs-on: macos-26
     outputs:
       tag: ${{ steps.version.outputs.tag }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
 
     steps:
       - name: Checkout
@@ -28,7 +29,7 @@ jobs:
         id: check_tag
         run: |
           git fetch --force --tags
-          current_tags="$(git tag --points-at HEAD | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/')"
+          current_tags="$(git tag --points-at HEAD | awk '/^v[0-9]+\.[0-9]+(\.[0-9]+)?$/')"
           if [[ -n "$current_tags" ]]; then
             echo "Current commit already has release tags: $current_tags"
             echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -40,23 +41,27 @@ jobs:
         if: steps.check_tag.outputs.skip != 'true'
         id: version
         run: |
-          latest_tag="$(git tag --sort=-version:refname | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/ { print; exit }')"
+          latest_tag="$(git tag --sort=-version:refname | awk '/^v[0-9]+\.[0-9]+(\.[0-9]+)?$/ { print; exit }')"
           if [[ -z "$latest_tag" ]]; then
             yml_version="$(awk '/MARKETING_VERSION:/ { print $2; exit }' project.yml | tr -d '"')"
-            latest_tag="v${yml_version:-1.0.0}"
+            latest_tag="v${yml_version:-0.1}"
             echo "No tags; using project.yml $latest_tag"
             version="${latest_tag#v}"
             new_version="$version"
+            prerelease=true
           else
             echo "Latest tag: $latest_tag"
             version="${latest_tag#v}"
             IFS='.' read -r major minor patch <<< "$version"
+            patch="${patch:-0}"
             patch=$((patch + 1))
             new_version="$major.$minor.$patch"
+            prerelease=false
           fi
 
           new_tag="v$new_version"
           IFS='.' read -r major minor patch <<< "$new_version"
+          patch="${patch:-0}"
           build_number="$((major * 1000000 + minor * 1000 + patch))"
 
           echo "New version: $new_version"
@@ -64,6 +69,7 @@ jobs:
             echo "version=$new_version"
             echo "tag=$new_tag"
             echo "build_number=$build_number"
+            echo "prerelease=$prerelease"
           } >> "$GITHUB_OUTPUT"
 
       - name: Update project.yml version
@@ -103,4 +109,5 @@ jobs:
     uses: ./.github/workflows/release.yml
     with:
       tag: ${{ needs.prepare-release.outputs.tag }}
+      prerelease: ${{ needs.prepare-release.outputs.prerelease == 'true' }}
     secrets: inherit

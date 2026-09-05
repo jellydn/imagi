@@ -8,7 +8,8 @@ GitHub Releases ship the **Mac** app only (`ImageStudio-<version>.dmg` and `.zip
 
 - CI (`.github/workflows/ci.yml`) runs on `push` to `main` and all PRs: `swift test`, `xcodegen generate`, then `ImageStudio-NativeTests`.
 - **Auto-release** (`.github/workflows/auto-release.yml`) runs on `push` to `main`:
-  - If HEAD has no tag, it uses `MARKETING_VERSION` from `project.yml` for the first release, then increments the patch (for example `v1.0.0` → `v1.0.1`)
+  - If HEAD has no tag, it publishes the initial `MARKETING_VERSION` from `project.yml` as a prerelease (`v0.1`)
+  - Later releases increment the patch and publish as stable releases (for example `v0.1` → `v0.1.1`)
   - Updates `project.yml`, creates a Git tag, then calls the shared release workflow
 - Manual release (`.github/workflows/release.yml`) builds and publishes on:
   - tag push: `v*` (example: `v1.0.0`)
