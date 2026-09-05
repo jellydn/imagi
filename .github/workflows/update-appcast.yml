@@ -1,0 +1,217 @@
+name: Update Release Metadata
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name to update (e.g., v1.0.0)'
+        required: true
+
+concurrency:
+  group: update-appcast
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  update-appcast:
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Resolve Sparkle tools
+        run: |
+          xcodegen generate
+          xcodebuild \
+            -resolvePackageDependencies \
+            -project ImageStudio.xcodeproj \
+            -scheme ImageStudio-Mac \
+            -derivedDataPath /tmp/imagi-derived
+          test -x /tmp/imagi-derived/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update
+
+      - name: Get release information
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="${{ github.event.inputs.tag }}"
+          fi
+          echo "Using tag: $TAG"
+          VERSION="${TAG#v}"
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          for part in "$major" "$minor" "$patch"; do
+            if ! [[ "$part" =~ ^[0-9]+$ ]]; then
+              echo "Invalid semantic version: $VERSION"
+              exit 1
+            fi
+          done
+          SPARKLE_VERSION="$((major * 1000000 + minor * 1000 + patch))"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sparkle_version=$SPARKLE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          RELEASE_JSON="$(gh api "repos/${{ github.repository }}/releases/tags/${TAG}" \
+            -H "Accept: application/vnd.github.html+json")"
+          RELEASE_DATE_ISO="$(echo "$RELEASE_JSON" | jq -r '.published_at // empty')"
+          RELEASE_NOTES_HTML="$(echo "$RELEASE_JSON" | jq -r '.body_html // empty')"
+          if [[ -z "$RELEASE_NOTES_HTML" ]]; then
+            RELEASE_NOTES_HTML="<p>Release ${VERSION}</p>"
+          fi
+          {
+            echo "release_notes_html<<EOF"
+            echo "$RELEASE_NOTES_HTML"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          DMG_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/ImageStudio-${VERSION}.dmg"
+          echo "dmg_url=$DMG_URL" >> "$GITHUB_OUTPUT"
+
+          if [[ -z "$RELEASE_DATE_ISO" ]]; then
+            RELEASE_DATE_ISO="$(date -u "+%Y-%m-%dT%H:%M:%SZ")"
+          fi
+          RELEASE_DATE=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$RELEASE_DATE_ISO" "+%a, %d %b %Y %H:%M:%S %z")
+          echo "release_date=$RELEASE_DATE" >> "$GITHUB_OUTPUT"
+
+      - name: Download DMG and get file size
+        id: dmg_info
+        env:
+          DMG_URL: ${{ steps.release.outputs.dmg_url }}
+        run: |
+          max_attempts=30
+          attempt=1
+          while :; do
+            echo "Attempt ${attempt}/${max_attempts} to download DMG from $DMG_URL"
+            if curl -sfL "$DMG_URL" -o /tmp/ImageStudio.dmg; then
+              break
+            fi
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "Error: Failed to download DMG from $DMG_URL after ${max_attempts} attempts"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            sleep 10
+          done
+          if [[ ! -s /tmp/ImageStudio.dmg ]]; then
+            echo "Error: Downloaded file is empty"
+            exit 1
+          fi
+          FILE_SIZE=$(stat -f%z /tmp/ImageStudio.dmg)
+          echo "file_size=$FILE_SIZE" >> "$GITHUB_OUTPUT"
+
+      - name: Sign DMG with Sparkle EdDSA key
+        id: sign
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [[ -z "${SPARKLE_PRIVATE_KEY:-}" ]]; then
+            echo "Error: Missing SPARKLE_PRIVATE_KEY secret"
+            exit 1
+          fi
+          ED_SIGNATURE="$(
+            echo "$SPARKLE_PRIVATE_KEY" | \
+            /tmp/imagi-derived/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update \
+              --ed-key-file - \
+              -p \
+              /tmp/ImageStudio.dmg
+          )"
+          echo "ed_signature=$ED_SIGNATURE" >> "$GITHUB_OUTPUT"
+
+      - name: Update appcast.xml
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          SPARKLE_VERSION: ${{ steps.release.outputs.sparkle_version }}
+          TAG: ${{ steps.release.outputs.tag }}
+          DMG_URL: ${{ steps.release.outputs.dmg_url }}
+          FILE_SIZE: ${{ steps.dmg_info.outputs.file_size }}
+          ED_SIGNATURE: ${{ steps.sign.outputs.ed_signature }}
+          RELEASE_DATE: ${{ steps.release.outputs.release_date }}
+          RELEASE_NOTES_HTML: ${{ steps.release.outputs.release_notes_html }}
+          REPO: ${{ github.repository }}
+        run: |
+          cat > /tmp/new_item.xml << 'EOF'
+          <item>
+            <title>Version ${VERSION}</title>
+            <link>https://github.com/${REPO}/releases/tag/${TAG}</link>
+            <sparkle:version>${SPARKLE_VERSION}</sparkle:version>
+            <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+            <description><![CDATA[
+              <h2>Image Studio ${VERSION}</h2>
+            ]]></description>
+            <pubDate>${RELEASE_DATE}</pubDate>
+            <enclosure url="${DMG_URL}"
+                       sparkle:version="${SPARKLE_VERSION}"
+                       sparkle:shortVersionString="${VERSION}"
+                       sparkle:edSignature="${ED_SIGNATURE}"
+                       length="${FILE_SIZE}"
+                       type="application/octet-stream" />
+          </item>
+          EOF
+          sed -i '' "s/\${VERSION}/$VERSION/g" /tmp/new_item.xml
+          sed -i '' "s/\${SPARKLE_VERSION}/$SPARKLE_VERSION/g" /tmp/new_item.xml
+          sed -i '' "s/\${TAG}/$TAG/g" /tmp/new_item.xml
+          sed -i '' "s|\${REPO}|$REPO|g" /tmp/new_item.xml
+          sed -i '' "s|\${DMG_URL}|$DMG_URL|g" /tmp/new_item.xml
+          sed -i '' "s/\${FILE_SIZE}/$FILE_SIZE/g" /tmp/new_item.xml
+          perl -i -pe 's/\$\{ED_SIGNATURE\}/$ENV{ED_SIGNATURE}/g' /tmp/new_item.xml
+          sed -i '' "s/\${RELEASE_DATE}/$RELEASE_DATE/g" /tmp/new_item.xml
+          printf '%s\n' "$RELEASE_NOTES_HTML" > /tmp/release_notes.html
+          awk '
+            { print }
+            /<h2>Image Studio .*<\/h2>/ {
+              while ((getline line < "/tmp/release_notes.html") > 0) {
+                print "              " line
+              }
+              close("/tmp/release_notes.html")
+            }
+          ' /tmp/new_item.xml > /tmp/new_item.with_notes.xml
+          mv /tmp/new_item.with_notes.xml /tmp/new_item.xml
+          perl -0777 -pe "s#\\s*<item>.*?<sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>.*?</item>\\s*##sg" \
+            appcast.xml > /tmp/appcast.without_current.xml
+          awk '
+            /<!-- Latest release will be added here by CI\/CD -->/ {
+              print
+              system("cat /tmp/new_item.xml")
+              next
+            }
+            { print }
+          ' /tmp/appcast.without_current.xml > /tmp/appcast.xml.new
+          awk '
+            BEGIN { max_items = 3; item_count = 0; in_item = 0 }
+            /<item>/ { in_item = 1; item_count++ }
+            in_item == 0 || item_count <= max_items { print }
+            /<\/item>/ {
+              if (item_count > max_items) { in_item = 0; next }
+              in_item = 0
+            }
+          ' /tmp/appcast.xml.new > /tmp/appcast.xml.trimmed
+          mv /tmp/appcast.xml.trimmed appcast.xml
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: update appcast for v${{ steps.release.outputs.version }} [skip ci]"
+          git push origin main

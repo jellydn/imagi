@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag, e.g. v1.0.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Resolve release tag
+        id: vars
+        run: |
+          git fetch --force --tags
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag="${GITHUB_REF_NAME}"
+          else
+            input_tag="${{ github.event.inputs.version }}"
+            if [[ -n "$input_tag" ]]; then
+              tag="$input_tag"
+            else
+              tag="$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || true)"
+            fi
+          fi
+
+          if [[ -z "$tag" ]]; then
+            echo "Unable to resolve release tag. Provide workflow input version (e.g. v1.0.0) or create a v* tag."
+            exit 1
+          fi
+
+          version="${tag#v}"
+          IFS='.' read -r major minor patch <<< "$version"
+          for part in "$major" "$minor" "$patch"; do
+            if ! [[ "$part" =~ ^[0-9]+$ ]]; then
+              echo "Invalid semantic version: $version"
+              exit 1
+            fi
+          done
+          build_number="$((major * 1000000 + minor * 1000 + patch))"
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "build_number=$build_number" >> "$GITHUB_OUTPUT"
+
+      - name: Update project.yml version
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+          BUILD_NUMBER: ${{ steps.vars.outputs.build_number }}
+        run: |
+          sed -i '' "s/MARKETING_VERSION: .*/MARKETING_VERSION: $VERSION/" project.yml
+          sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: $BUILD_NUMBER/" project.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add project.yml
+          git diff --staged --quiet || git commit -m "chore: bump version to v$VERSION [skip ci]" && git push origin HEAD:main
+
+      - name: Build DMG and ZIP
+        id: assets
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+          BUILD_NUMBER: ${{ steps.vars.outputs.build_number }}
+        run: scripts/release/build-release-assets.sh
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: imagi-release-${{ steps.vars.outputs.tag }}
+          path: |
+            ${{ steps.assets.outputs.dmg_path }}
+            ${{ steps.assets.outputs.zip_path }}
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            ${{ steps.assets.outputs.dmg_path }}
+            ${{ steps.assets.outputs.zip_path }}

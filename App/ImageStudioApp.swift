@@ -5,6 +5,9 @@ import SwiftData
 struct ImageStudioApp: App {
     private let persistence: Result<ModelContainer, Error>
     @State private var studio = StudioModel()
+    #if os(macOS)
+    @StateObject private var sparkleUpdater = SparkleUpdater()
+    #endif
 
     init() {
         persistence = Result {
@@ -21,6 +24,9 @@ struct ImageStudioApp: App {
                 RootView()
                     .modelContainer(container)
                     .environment(studio)
+                    #if os(macOS)
+                    .environmentObject(sparkleUpdater)
+                    #endif
                     .tint(StudioTheme.accent)
             case .failure:
                 ContentUnavailableView("Library could not open", systemImage: "externaldrive.badge.exclamationmark",
