@@ -25,7 +25,7 @@ Built and maintained by [@jellydn](https://github.com/jellydn).
 - **Export** — ShareLink, Photos, context menus, confirmed deletion
 - **Credentials** — Keychain only. Defaults and notification choice live in preferences
 
-**Provider subscriptions work differently.** ChatGPT Plus/Pro does not include OpenAI API usage. Paid Grok plans can include a shared pool with an API category, but xAI's public image API flow still requires an API key and allowance depends on the account and plan. This app does not use cookies, private endpoints, another app's OAuth client, or other subscription workarounds. Saving a key does not verify it; the first real request does.
+**Provider subscriptions work differently.** ChatGPT Plus/Pro does not include OpenAI API usage. OpenAI documents ChatGPT OAuth for its Codex clients, not as a third-party image API sign-in. Paid Grok plans can include API use in a shared weekly pool; the xAI API key connects the request to the applicable account and team, so no separate Grok OAuth flow is needed. Allowance depends on the account and plan. This app does not use cookies, private endpoints, another app's OAuth client, or other subscription workarounds. Saving a key does not verify it; the first real request does.
 
 ## Prerequisites
 

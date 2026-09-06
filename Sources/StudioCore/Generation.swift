@@ -20,8 +20,8 @@ public enum ProviderID: String, CaseIterable, Codable, Sendable, Identifiable {
         case .openAI:
             return ProviderAuthentication(
                 subscriptionTitle: "ChatGPT subscriptions",
-                subscriptionStatus: "Not supported",
-                subscriptionDescription: "ChatGPT Plus and Pro do not include OpenAI API usage. OpenAI API billing is separate, and there is no supported ChatGPT sign-in for this app.",
+                subscriptionStatus: "API billing is separate",
+                subscriptionDescription: "ChatGPT Plus and Pro do not fund OpenAI API usage. OpenAI documents ChatGPT sign-in for its Codex clients, not as a third-party image API OAuth flow. Use an OpenAI Platform API key with separate API billing.",
                 subscriptionHelpURL: URL(string: "https://help.openai.com/en/articles/9039756")!,
                 apiKeyURL: URL(string: "https://platform.openai.com/api-keys")!,
                 apiUsageTitle: "Set up API billing ↗",
@@ -30,8 +30,8 @@ public enum ProviderID: String, CaseIterable, Codable, Sendable, Identifiable {
         case .xAI:
             return ProviderAuthentication(
                 subscriptionTitle: "Grok subscriptions",
-                subscriptionStatus: "No public sign-in",
-                subscriptionDescription: "Paid Grok plans can include a shared usage pool with an API category. xAI does not document a general OAuth registration flow for this app, so use its public API-key flow. Allowance depends on your account and plan.",
+                subscriptionStatus: "API key connects account",
+                subscriptionDescription: "Paid Grok plans can include API use in a shared weekly pool. xAI's public Imagine API uses a team-bound API key, so eligible subscription allowance can apply without a separate OAuth sign-in. Allowance depends on your account and plan.",
                 subscriptionHelpURL: URL(string: "https://docs.x.ai/grok/faq")!,
                 apiKeyURL: URL(string: "https://console.x.ai/team/default/api-keys")!,
                 apiUsageTitle: "Manage API usage ↗",
@@ -99,7 +99,7 @@ public enum StudioError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidRequest(let message): return message
-        case .missingCredential: return "Add an API key for this provider in Settings. Subscription sign-in is not available."
+        case .missingCredential: return "Add an API key for this provider in Settings. Provider image APIs do not offer subscription OAuth to this app."
         case .http(401): return "The API key was rejected. Check it in Settings."
         case .http(403): return "This account cannot use the image model. Check provider access and organization verification."
         case .http(429): return "The provider limit was reached. Check API credit and rate limits before you try again."
