@@ -55,7 +55,7 @@
 
 **Environment:**
 - No environment variables are read; users enter official OpenAI or xAI API credentials in `App/SettingsView.swift`, and `App/CredentialStore.swift` stores them per provider in Keychain.
-- ChatGPT Plus/Pro does not fund OpenAI API use. Eligible paid Grok plans can apply shared allowance to API use through the required xAI API key. The provider differences are explained in `App/SettingsView.swift` and `README.md`.
+- ChatGPT Plus/Pro and Grok subscriptions do not fund provider API use. OpenAI and xAI API billing are managed separately through their developer platforms, as explained in `App/SettingsView.swift` and `README.md`.
 - OpenAI uses model `gpt-image-1`; xAI uses `grok-imagine-image-2.0`, both centralized in `Sources/StudioCore/Generation.swift`.
 
 **Build:**

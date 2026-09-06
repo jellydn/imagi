@@ -80,7 +80,7 @@ final class ProviderTests: XCTestCase {
 
     func testProviderAuthenticationOptionsUseOfficialHTTPSPages() {
         XCTAssertEqual(ProviderID.openAI.authentication.subscriptionStatus, "API billing is separate")
-        XCTAssertEqual(ProviderID.xAI.authentication.subscriptionStatus, "API key connects account")
+        XCTAssertEqual(ProviderID.xAI.authentication.subscriptionStatus, "API billing is separate")
 
         for provider in ProviderID.allCases {
             XCTAssertEqual(provider.authentication.subscriptionHelpURL.scheme, "https")

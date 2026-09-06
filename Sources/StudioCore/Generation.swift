@@ -30,9 +30,9 @@ public enum ProviderID: String, CaseIterable, Codable, Sendable, Identifiable {
         case .xAI:
             return ProviderAuthentication(
                 subscriptionTitle: "Grok subscriptions",
-                subscriptionStatus: "API key connects account",
-                subscriptionDescription: "Paid Grok plans can include API use in a shared weekly pool. xAI's public Imagine API uses a team-bound API key, so eligible subscription allowance can apply without a separate OAuth sign-in. Allowance depends on your account and plan.",
-                subscriptionHelpURL: URL(string: "https://docs.x.ai/grok/faq")!,
+                subscriptionStatus: "API billing is separate",
+                subscriptionDescription: "Grok subscriptions do not fund xAI API usage. xAI's public Imagine API uses a team-bound API key and API credits managed through the xAI Console. There is no separate Grok OAuth sign-in for this app.",
+                subscriptionHelpURL: URL(string: "https://docs.x.ai/console/faq/accounts")!,
                 apiKeyURL: URL(string: "https://console.x.ai/team/default/api-keys")!,
                 apiUsageTitle: "Manage API usage ↗",
                 apiUsageURL: URL(string: "https://console.x.ai/team/default/billing")!

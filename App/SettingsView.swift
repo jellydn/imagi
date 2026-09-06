@@ -19,7 +19,7 @@ struct SettingsView: View {
             Section {
                 Label("Your studio. Your provider.", systemImage: "key.horizontal")
                     .font(.headline)
-                Text("OpenAI API billing is separate from ChatGPT. Eligible Grok plans can apply shared allowance through an xAI API key. Add the key required by each public developer flow.")
+                Text("OpenAI and xAI API billing are separate from ChatGPT and Grok subscriptions. Add the key required by each public developer flow.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             ForEach(ProviderID.allCases) { provider in
