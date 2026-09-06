@@ -25,7 +25,7 @@ Built and maintained by [@jellydn](https://github.com/jellydn).
 - **Export** — ShareLink, Photos, context menus, confirmed deletion
 - **Credentials** — Keychain only. Defaults and notification choice live in preferences
 
-**Provider subscriptions work differently.** ChatGPT Plus/Pro does not include OpenAI API usage. Paid Grok plans can include a shared pool with an API category, but xAI's public image API flow still requires an API key and allowance depends on the account and plan. This app does not use cookies, private endpoints, another app's OAuth client, or other subscription workarounds. Saving a key does not verify it; the first real request does.
+**Provider subscriptions do not fund API use.** ChatGPT Plus/Pro does not include OpenAI API usage. OpenAI documents ChatGPT OAuth for its Codex clients, not as a third-party image API sign-in. Grok and the xAI API can share an account, but their billing is separate. Both image APIs require API keys and API billing or credits managed through the provider's developer console. This app does not use cookies, private endpoints, another app's OAuth client, or other subscription workarounds. Saving a key does not verify it; the first real request does.
 
 ## Prerequisites
 
@@ -68,7 +68,7 @@ After you change `project.yml`, run `just generate` again. Do not edit `ImageStu
 4. Select **Generate**. Images are saved to History automatically.
 5. Open a variant. Select **Refine** to use it as the reference, or use **Save to Photos** / **Share**.
 
-A saved key is not reported as verified until a real request succeeds. Each generation or edit can use provider credit or subscription allowance and can incur charges. There are no automatic paid retries. **Regenerate** restores the original prompt, settings, and reference (for an edit). You still select **Generate** to confirm a new request.
+A saved key is not reported as verified until a real request succeeds. Each generation or edit can use provider API credits and can incur charges. There are no automatic paid retries. **Regenerate** restores the original prompt, settings, and reference (for an edit). You still select **Generate** to confirm a new request.
 
 ## Development
 
@@ -142,7 +142,7 @@ Generation uses a cancellable URLSession request with a 300s timeout. iOS grants
 - [OpenAI ChatGPT and API billing](https://help.openai.com/en/articles/9039756)
 - [OpenAI image generation and edits](https://platform.openai.com/docs/guides/image-generation)
 - [xAI API quickstart and API-key authentication](https://docs.x.ai/developers/quickstart)
-- [xAI Grok subscriptions and shared usage](https://docs.x.ai/grok/faq)
+- [xAI Grok and API accounts and billing](https://docs.x.ai/console/faq/accounts)
 - [xAI API billing](https://docs.x.ai/console/billing)
 - [xAI image generation](https://docs.x.ai/developers/model-capabilities/images/generation)
 - [xAI image editing](https://docs.x.ai/developers/model-capabilities/images/editing)
