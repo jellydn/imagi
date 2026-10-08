@@ -7,6 +7,20 @@
     <language>en</language>
     <!-- Latest release will be added here by CI/CD -->
     <item>
+      <title>Version 0.1.2</title>
+      <link>https://github.com/jellydn/imagi/releases/tag/v0.1.2</link>
+      <sparkle:version>1002</sparkle:version>
+      <sparkle:shortVersionString>0.1.2</sparkle:shortVersionString>
+      <description><![CDATA[<h2>Image Studio 0.1.2</h2>
+<h2>What's Changed</h2>
+<ul>
+<li>chore(deps): update dependency sparkle to v2.10.0 by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/renovate/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/renovate">@renovate</a>[bot] in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="5444373543" data-permission-text="Title is private" data-url="https://github.com/jellydn/imagi/issues/10" data-hovercard-type="pull_request" data-hovercard-url="/jellydn/imagi/pull/10/hovercard" href="https://github.com/jellydn/imagi/pull/10">#10</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a class="commit-link" href="https://github.com/jellydn/imagi/compare/v0.1.1...v0.1.2"><tt>v0.1.1...v0.1.2</tt></a></p>]]></description>
+      <pubDate>Thu, 08 Oct 2026 23:50:53 +0000</pubDate>
+      <enclosure url="https://github.com/jellydn/imagi/releases/download/v0.1.2/ImageStudio-0.1.2.dmg" sparkle:version="1002" sparkle:shortVersionString="0.1.2" sparkle:edSignature="l6lJ8Fu4x2gH73fK08ok44tCYmsXmfQgBl0OYyH1bh0DUeLfLJI2wGqMJSGlLpvJdTpEs+fvj6roXtPWFoN2Dg==" length="1788509" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Version 0.1.1</title>
       <link>https://github.com/jellydn/imagi/releases/tag/v0.1.1</link>
       <sparkle:version>1001</sparkle:version>
