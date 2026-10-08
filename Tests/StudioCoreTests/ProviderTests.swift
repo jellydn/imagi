@@ -79,8 +79,8 @@ final class ProviderTests: XCTestCase {
     }
 
     func testProviderAuthenticationOptionsUseOfficialHTTPSPages() {
-        XCTAssertEqual(ProviderID.openAI.authentication.subscriptionStatus, "Not supported")
-        XCTAssertEqual(ProviderID.xAI.authentication.subscriptionStatus, "No public sign-in")
+        XCTAssertEqual(ProviderID.openAI.authentication.subscriptionStatus, "API billing is separate")
+        XCTAssertEqual(ProviderID.xAI.authentication.subscriptionStatus, "API billing is separate")
 
         for provider in ProviderID.allCases {
             XCTAssertEqual(provider.authentication.subscriptionHelpURL.scheme, "https")
@@ -116,7 +116,7 @@ final class ProviderTests: XCTestCase {
             XCTFail("Expected credential failure")
         } catch {
             XCTAssertTrue(error is StudioError)
-            XCTAssertEqual(error.localizedDescription, "Add an API key for this provider in Settings. Subscription sign-in is not available.")
+            XCTAssertEqual(error.localizedDescription, "Add an API key for this provider in Settings. Provider image APIs do not offer subscription OAuth to this app.")
         }
         let calls = await provider.calls
         XCTAssertEqual(calls, 0)
